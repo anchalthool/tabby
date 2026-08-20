@@ -15,13 +15,12 @@ const receiptSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          name: { type: Type.STRING },
-          quantity: { type: Type.NUMBER },
-          totalPrice: { type: Type.NUMBER },
-          category: { type: Type.STRING },
-          confidence: { type: Type.NUMBER },
-        },
-        required: ["name", "quantity", "totalPrice"],
+  name: { type: Type.STRING },
+  quantity: { type: Type.NUMBER },
+  totalPrice: { type: Type.NUMBER },
+  category: { type: Type.STRING },
+},
+required: ["name", "quantity", "totalPrice", "category"],
       },
     },
     subtotal: { type: Type.NUMBER },
@@ -110,7 +109,6 @@ Extraction rules:
 - Return order-level tax, delivery fee, service fee, tip, discount, subtotal and total only once, even if summary information appears in several screenshots.
 - Discounts must be positive numbers in the discount field; use 0 when absent.
 - If the order total is visible, preserve that printed total.
-- If uncertain about a line, still include your best interpretation but lower confidence below 0.75.
 - Money values should be plain numeric values in the receipt currency; this app currently treats them as USD.
 
 Return only the structured response.`;
@@ -125,10 +123,13 @@ Return only the structured response.`;
     });
 
     const parsed = JSON.parse(response.text || "{}");
-    parsed.items = (parsed.items || []).map((item: Record<string, unknown>, index: number) => ({
-      ...item,
-      id: `scan-${Date.now()}-${index}`,
-    }));
+    parsed.items = (parsed.items || []).map(
+  (item: Record<string, unknown>, index: number) => ({
+    ...item,
+    id: `scan-${Date.now()}-${index}`,
+    confidence: 1,
+  })
+);
 
     return NextResponse.json(parsed);
   } catch (error) {

@@ -10,6 +10,8 @@ import Avatar from "@/components/Avatar";
 import { uid, itemSignature } from "@/utils/receipt";
 
 
+
+
 type UploadImage = {
   id: string;
   file: File;
@@ -25,6 +27,10 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [uploads, setUploads] = useState<UploadImage[]>([]);
+
+  const [manualItemName, setManualItemName] = useState("");
+const [manualItemQuantity, setManualItemQuantity] = useState("1");
+const [manualItemPrice, setManualItemPrice] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("cartsplit-friends");
@@ -44,6 +50,19 @@ export default function Home() {
     else localStorage.removeItem("cartsplit-friends");
     if (!friends.some((friend) => friend.id === payerId)) setPayerId(friends[0]?.id || "");
   }, [friends, payerId]);
+
+  const clearAll = () => {
+  uploads.forEach((upload) => URL.revokeObjectURL(upload.previewUrl));
+
+  setReceipt(emptyReceipt);
+  setFriends([]);
+  setNewFriend("");
+  setAssignments({});
+  setUploads([]);
+  setMessage("");
+
+  localStorage.removeItem("cartsplit-friends");
+};
 
   const initAssignments = (items: ReceiptItem[]) => {
     const next: Record<string, ItemAssignment> = {};
@@ -146,13 +165,43 @@ export default function Home() {
   };
 
   const addItem = () => {
-    const item: ReceiptItem = { id: uid(), name: "New item", quantity: 1, totalPrice: 0, confidence: 1 };
-    setReceipt((prev) => ({ ...prev, items: [...prev.items, item] }));
-    setAssignments((prev) => ({
-      ...prev,
-      [item.id]: { shared: false, sharedWith: [], quantities: {} },
-    }));
+  const name = manualItemName.trim();
+
+  if (!name) {
+    setMessage("Enter an item name first.");
+    return;
+  }
+
+  const quantity = Math.max(1, Number(manualItemQuantity) || 1);
+  const totalPrice = Math.max(0, Number(manualItemPrice) || 0);
+
+  const item: ReceiptItem = {
+    id: uid(),
+    name: capitalizeWords(name),
+    quantity,
+    totalPrice,
+    category: "Grocery",
+    confidence: 1,
   };
+
+  setReceipt((prev) => ({
+    ...prev,
+    items: [...prev.items, item],
+  }));
+
+  setAssignments((prev) => ({
+    ...prev,
+    [item.id]: {
+      shared: false,
+      sharedWith: [],
+      quantities: {},
+    },
+  }));
+
+  setManualItemName("");
+  setManualItemQuantity("1");
+  setManualItemPrice("");
+};
 
   const updateItem = (id: string, patch: Partial<ReceiptItem>) => {
     setReceipt((prev) => ({ ...prev, items: prev.items.map((item) => (item.id === id ? { ...item, ...patch } : item)) }));
@@ -175,7 +224,10 @@ export default function Home() {
         (sum, [id, qty]) => (id === friendId ? sum : sum + qty),
         0
       );
-      const maxForFriend = Math.max(0, item.quantity - assignedOther);
+      const maxForFriend = Math.max(
+  0,
+  item.quantity - assignedOther
+);
       const nextQty = Math.min(maxForFriend, Math.max(0, current + delta));
       return {
         ...prev,
@@ -335,6 +387,9 @@ export default function Home() {
             <input type="file" accept="image/*" multiple onChange={queueImages} disabled={busy} />
           </label>
           <button className="ghost-button" onClick={useDemo}>Try demo</button>
+          <button className="ghost-button" onClick={clearAll}>
+  Clear all
+</button>
         </div>
 
         {!!uploads.length && (
@@ -378,8 +433,37 @@ export default function Home() {
             <p className="step-kicker">01 · REVIEW</p>
             <h2>{receipt.merchant || "Your receipt"}</h2>
           </div>
-          <button className="small-button" onClick={addItem}>＋ Add item</button>
+
         </div>
+        <div className="manual-item-form">
+  <input
+    type="text"
+    placeholder="Item name"
+    value={manualItemName}
+    onChange={(event) =>
+      setManualItemName(capitalizeWords(event.target.value))
+    }
+  />
+
+  <input
+    type="number"
+    min="1"
+    placeholder="Qty"
+    value={manualItemQuantity}
+    onChange={(event) => setManualItemQuantity(event.target.value)}
+  />
+
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    placeholder="Price"
+    value={manualItemPrice}
+    onChange={(event) => setManualItemPrice(event.target.value)}
+  />
+
+  <button onClick={addItem}>＋ Add</button>
+</div>
 
         <div className="receipt-card">
           {receipt.items.length === 0 ? (
@@ -409,12 +493,40 @@ export default function Home() {
                 </div>
                 <label className="mini-field">
                   Qty
-                  <input type="number" min="1" step="1" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Math.max(1, Number(event.target.value)) })} />
-                </label>
+                  <input
+  type="number"
+  min="1"
+  step="1"
+  value={item.quantity || ""}
+  onChange={(event) => {
+    const value = event.target.value;
+
+    updateItem(item.id, {
+      quantity: value === "" ? 0 : Number(value),
+    });
+  }}
+  onBlur={() => {
+    if (!item.quantity || item.quantity < 1) {
+      updateItem(item.id, { quantity: 1 });
+    }
+  }}
+/>
+                  </label>
                 <label className="mini-field">
                   Price
-                  <input type="number" min="0" step="0.01" value={item.totalPrice} onChange={(event) => updateItem(item.id, { totalPrice: Math.max(0, Number(event.target.value)) })} />
-                </label>
+                 <input
+  type="number"
+  min="0"
+  step="0.01"
+  value={item.totalPrice === 0 ? "" : item.totalPrice}
+  onChange={(event) => {
+    const value = event.target.value;
+
+    updateItem(item.id, {
+      totalPrice: value === "" ? 0 : Number(value),
+    });
+  }}
+/> </label>
                 <button className="trash-button" onClick={() => removeItem(item.id)} aria-label={`Delete ${item.name}`}>×</button>
               </div>
             ))
@@ -431,7 +543,7 @@ export default function Home() {
         <div className="friends-panel">
           <div className="friend-input">
             <input
-  placeholder="Friend’s Splitwise name"
+  placeholder="Friend’s name"
   value={newFriend}
   onChange={(event) =>
     setNewFriend(capitalizeWords(event.target.value))

@@ -239,8 +239,14 @@ h1 span { color: var(--g-green); font-style: italic; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin: 54px 0 18px; }
 .step-kicker { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); }
 .section-heading h2 {
-  margin: 0; font-size: clamp(30px, 5vw, 40px); line-height: 1.05; letter-spacing: -0.01em; color: var(--ink);
-  font-family: var(--font-display), serif; font-weight: 600;
+  margin: 0;
+  font-size: clamp(30px, 5vw, 40px);
+  line-height: 1.2;
+  padding-bottom: 4px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-family: var(--font-display), serif;
+  font-weight: 600;
 }
 .small-button { padding: 10px 16px; font-size: 13px; background: #fff; border: 2px solid var(--line-2); }
 .small-button:hover { background: var(--g-pale); }
@@ -282,16 +288,54 @@ h1 span { color: var(--g-green); font-style: italic; }
 .item-meta { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
 .uncertain { color: var(--rose); font-weight: 700; }
 .mini-field { display: grid; gap: 5px; color: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-.mini-field input, .fees-card input, .friend-input input, .payer-row select {
+.mini-field input, .fees-card input, .friend-input input {
   width: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 9px 11px; background: #fff; color: var(--ink); font-weight: 600;
   transition: border-color 0.14s ease;
 }
-.mini-field input:focus, .fees-card input:focus, .friend-input input:focus, .payer-row select:focus {
+.mini-field input:focus, .fees-card input:focus, .friend-input input:focus {
   outline: none; border-color: var(--g-green);
 }
 .trash-button { border: 2px solid var(--line); background: #fff; color: var(--red); width: 32px; height: 32px; border-radius: 50%; font-weight: 700; transition: background 0.14s ease; }
 .trash-button:hover { background: var(--lightpink); border-color: var(--lightpink); color: #fff; }
 .receipt-total-row { display: flex; justify-content: space-between; padding: 17px 20px; background: var(--g-pale); font-weight: 700; font-size: 16px; color: var(--ink); }
+
+/* ================= MANUAL ITEM ================= */
+.manual-item-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 110px auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.manual-item-form input {
+  width: 100%;
+  min-width: 0;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 13px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  outline: none;
+}
+
+.manual-item-form input:focus {
+  border-color: var(--g-green);
+}
+
+.manual-item-form button {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 20px;
+  background: var(--g-green);
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.manual-item-form button:hover {
+  background: var(--g-deep);
+}
 
 /* ================= FRIENDS ================= */
 .friends-panel { padding: 20px; }
@@ -310,12 +354,6 @@ h1 span { color: var(--g-green); font-style: italic; }
 .friend-chip-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .friend-chip-close { margin-left: 2px; color: var(--ink-soft); }
 .hint { color: var(--ink-soft); font-size: 13px; }
-.payer-row {
-  margin-top: 18px; padding-top: 16px; border-top: 2px solid var(--cream); display: flex; justify-content: space-between;
-  align-items: center; font-weight: 700; font-size: 14px; gap: 10px; color: var(--ink);
-}
-.payer-row select { max-width: 220px; }
-
 /* ================= ASSIGNMENT ================= */
 .helper-text { color: var(--ink-soft); font-size: 13px; }
 .assignment-list { display: grid; gap: 16px; }
@@ -379,14 +417,6 @@ h1 span { color: var(--g-green); font-style: italic; }
 .grand-total strong { font-family: var(--font-display), serif; font-weight: 600; }
 .match-note { padding-top: 8px; color: var(--ink-soft); font-size: 13px; font-weight: 500; }
 .warning { background: var(--paleyellow); border: 2px solid var(--yellow); padding: 12px 14px; border-radius: 6px 18px 6px 18px; font-size: 13px; margin-top: 14px; color: #7a6a2a; }
-.splitwise-button {
-  width: 100%; margin-top: 18px; border: 0; color: #fff; background: var(--g-deep);
-  border-radius: 999px; padding: 15px; font-weight: 700; font-size: 15px; transition: background 0.14s ease, transform 0.14s ease;
-}
-.splitwise-button:hover:not(:disabled) { background: var(--g-green); }
-.splitwise-button:active:not(:disabled) { transform: translateY(1px); }
-.splitwise-button:disabled { opacity: 0.45; }
-
 footer { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 8px 20px 48px; position: relative; z-index: 2; }
 
 /* ================= THIN LINE DOODLES ================= */
@@ -422,37 +452,78 @@ footer { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 8
   .upload-thumb, .upload-more { flex-basis: 84px; height: 104px; }
   .workspace { padding-left: 16px; padding-right: 16px; }
   .section-heading { align-items: flex-start; margin-top: 40px; }
+  .section-heading h2 {
+    line-height: 1.2;
+    padding-bottom: 5px;
+  }
+
+  /* Mobile receipt rows: icon/name on top, qty/price below */
   .review-item {
-  grid-template-columns: 48px minmax(0, 1fr) 62px 80px;
-  column-gap: 12px;
-  row-gap: 10px;
-  padding: 14px;
-}
+    grid-template-columns: 48px minmax(0, 1fr) 32px;
+    gap: 10px;
+    padding: 14px;
+  }
 
-.food-badge {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  flex-shrink: 0;
-}
+  .review-item > .food-badge {
+    grid-column: 1;
+    grid-row: 1;
+  }
 
-.badge-glyph {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
+  .review-item > .item-main {
+    grid-column: 2;
+    grid-row: 1;
+  }
 
-.item-main {
-  min-width: 0;
-}
+  .review-item > .trash-button {
+    grid-column: 3;
+    grid-row: 1;
+  }
 
-.item-name {
-  width: 100%;
-  min-width: 0;
-  font-size: 15px;
-}
+  .review-item > .mini-field {
+    grid-row: 2;
+  }
+
+  .review-item > .mini-field:nth-of-type(1) {
+    grid-column: 1 / 2;
+  }
+
+  .review-item > .mini-field:nth-of-type(2) {
+    grid-column: 2 / 4;
+  }
+
+  .food-badge {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+  }
+
+  .food-badge img.badge-glyph {
+    width: 68%;
+    height: 68%;
+    object-fit: contain;
+  }
+
+  .item-main {
+    min-width: 0;
+  }
+
+  .item-name {
+    width: 100%;
+    min-width: 0;
+    font-size: 15px;
+  }
+
+  .manual-item-form {
+    grid-template-columns: minmax(0, 1fr) 62px 82px;
+    gap: 8px;
+  }
+
+  .manual-item-form button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
   .friend-input button { padding: 0 18px; }
   .quantity-grid, .share-grid, .summary-layout { grid-template-columns: 1fr; }
   .helper-text { display: none; }
