@@ -354,6 +354,143 @@ h1 span { color: var(--g-green); font-style: italic; }
 .friend-chip-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .friend-chip-close { margin-left: 2px; color: var(--ink-soft); }
 .hint { color: var(--ink-soft); font-size: 13px; }
+
+
+.payer-row {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 2px solid var(--cream);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.payer-row select {
+  width: 100%;
+  max-width: 220px;
+
+  border: 2px solid var(--line);
+  border-radius: 12px;
+
+  padding: 9px 11px;
+
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.payer-row select:focus {
+  outline: none;
+  border-color: var(--g-green);
+}
+
+@media (max-width: 700px) {
+  .payer-row {
+    align-items: center;
+  }
+
+  .payer-row select {
+    max-width: 180px;
+  }
+}
+
+.extra-person-breakdown {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid var(--cream);
+}
+
+.extra-person-title {
+  display: block;
+  margin-bottom: 10px;
+
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.extra-person-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 7px 0;
+}
+
+.extra-person-row > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  min-width: 0;
+}
+
+.extra-person-row .avatar {
+  width: 30px;
+  height: 30px;
+}
+
+.extra-person-row span {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extra-person-row strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+.extra-split-choice {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid var(--cream);
+}
+
+.extra-split-choice > span {
+  display: block;
+  margin-bottom: 10px;
+
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.extra-split-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.extra-split-buttons button {
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 10px;
+
+  background: #fff;
+  color: var(--ink-body);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.extra-split-buttons button.active {
+  background: var(--g-green);
+  border-color: var(--g-green);
+  color: #fff;
+}
 /* ================= ASSIGNMENT ================= */
 .helper-text { color: var(--ink-soft); font-size: 13px; }
 .assignment-list { display: grid; gap: 16px; }
@@ -419,6 +556,72 @@ h1 span { color: var(--g-green); font-style: italic; }
 .warning { background: var(--paleyellow); border: 2px solid var(--yellow); padding: 12px 14px; border-radius: 6px 18px 6px 18px; font-size: 13px; margin-top: 14px; color: #7a6a2a; }
 footer { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 8px 20px 48px; position: relative; z-index: 2; }
 
+
+.split-export {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 26px;
+
+  background: #fffed8;
+  border: 2px solid var(--line);
+  border-radius: var(--r-b);
+
+  overflow: hidden;
+}
+
+.split-export-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+
+  border-bottom: 2px solid var(--line);
+}
+
+.split-export-header > span {
+  color: var(--g-green);
+
+  font-family: var(--font-display), serif;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.split-export-header small {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.save-image-button {
+  width: 100%;
+
+  margin-top: 16px;
+  padding: 14px 18px;
+
+  border: 2px solid var(--g-green);
+  border-radius: 999px;
+
+  background: var(--g-green);
+  color: #fff;
+
+  font-weight: 700;
+}
+
+.save-image-button:hover {
+  background: var(--g-deep);
+  border-color: var(--g-deep);
+}
+
+.save-image-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 /* ================= THIN LINE DOODLES ================= */
 .grocery-doodle {
   position: absolute; z-index: 1; width: 78px; height: 78px; overflow: visible; opacity: 0.55; fill: none;

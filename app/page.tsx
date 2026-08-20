@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { money, round2 } from "@/lib/money";
 import type { Friend, ItemAssignment, ReceiptData, ReceiptItem } from "@/lib/types";
 import { demoReceipt, emptyReceipt } from "@/data/demoReceipt";
@@ -8,6 +8,8 @@ import { capitalizeWords } from "@/utils/text";
 import FoodIcon from "@/components/FoodIcon";
 import Avatar from "@/components/Avatar";
 import { uid, itemSignature } from "@/utils/receipt";
+import { toPng } from "html-to-image";
+
 
 
 
@@ -29,8 +31,11 @@ export default function Home() {
   const [uploads, setUploads] = useState<UploadImage[]>([]);
 
   const [manualItemName, setManualItemName] = useState("");
-const [manualItemQuantity, setManualItemQuantity] = useState("1");
-const [manualItemPrice, setManualItemPrice] = useState("");
+  const [manualItemQuantity, setManualItemQuantity] = useState("1");
+  const [manualItemPrice, setManualItemPrice] = useState("");
+  const [extraSplitMode, setExtraSplitMode] = useState<"proportional" | "equal">("proportional");
+
+  const finalSplitRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("cartsplit-friends");
@@ -52,17 +57,22 @@ const [manualItemPrice, setManualItemPrice] = useState("");
   }, [friends, payerId]);
 
   const clearAll = () => {
-  uploads.forEach((upload) => URL.revokeObjectURL(upload.previewUrl));
+    uploads.forEach((upload) => URL.revokeObjectURL(upload.previewUrl));
 
-  setReceipt(emptyReceipt);
-  setFriends([]);
-  setNewFriend("");
-  setAssignments({});
-  setUploads([]);
-  setMessage("");
+    setReceipt(emptyReceipt);
+    setFriends([]);
+    setNewFriend("");
+    setPayerId("");
+    setAssignments({});
+    setUploads([]);
+    setMessage("");
+    setManualItemName("");
+    setManualItemQuantity("1");
+    setManualItemPrice("");
+    setExtraSplitMode("proportional");
 
-  localStorage.removeItem("cartsplit-friends");
-};
+    localStorage.removeItem("cartsplit-friends");
+  };
 
   const initAssignments = (items: ReceiptItem[]) => {
     const next: Record<string, ItemAssignment> = {};
@@ -216,6 +226,8 @@ const [manualItemPrice, setManualItemPrice] = useState("");
     });
   };
 
+
+
   const setQuantity = (item: ReceiptItem, friendId: string, delta: number) => {
     setAssignments((prev) => {
       const assignment = prev[item.id] || { shared: false, sharedWith: [], quantities: {} };
@@ -253,6 +265,9 @@ const [manualItemPrice, setManualItemPrice] = useState("");
     });
   };
 
+
+  
+
   const splitEveryone = (itemId: string) => {
     setAssignments((prev) => ({
       ...prev,
@@ -277,29 +292,38 @@ const [manualItemPrice, setManualItemPrice] = useState("");
       Number(receipt.discount || 0)
   );
 
-  const totals = useMemo(() => {
-    const resultCents: Record<string, number> = Object.fromEntries(friends.map((friend) => [friend.id, 0]));
+  const baseTotals = useMemo(() => {
+    const resultCents: Record<string, number> = Object.fromEntries(
+      friends.map((friend) => [friend.id, 0])
+    );
 
     const distributeCents = (totalCents: number, ids: string[]) => {
       if (!ids.length) return;
+
       const sign = totalCents < 0 ? -1 : 1;
       const absolute = Math.abs(totalCents);
       const base = Math.floor(absolute / ids.length) * sign;
       const remainder = absolute % ids.length;
+
       ids.forEach((id, index) => {
-        resultCents[id] = (resultCents[id] || 0) + base + (index < remainder ? sign : 0);
+        resultCents[id] =
+          (resultCents[id] || 0) +
+          base +
+          (index < remainder ? sign : 0);
       });
     };
 
     receipt.items.forEach((item) => {
       const assignment = assignments[item.id];
       if (!assignment) return;
+
       const itemCents = Math.round(Number(item.totalPrice || 0) * 100);
 
       if (assignment.shared && assignment.sharedWith.length) {
         const selectedInFriendOrder = friends
           .filter((friend) => assignment.sharedWith.includes(friend.id))
           .map((friend) => friend.id);
+
         distributeCents(itemCents, selectedInFriendOrder);
       } else if (!assignment.shared && item.quantity > 0) {
         const unitBase = Math.floor(itemCents / item.quantity);
@@ -308,19 +332,105 @@ const [manualItemPrice, setManualItemPrice] = useState("");
 
         friends.forEach((friend) => {
           const qty = assignment.quantities[friend.id] || 0;
+
           for (let i = 0; i < qty; i += 1) {
             const unitCents = unitBase + (unitIndex < extraPennies ? 1 : 0);
-            resultCents[friend.id] = (resultCents[friend.id] || 0) + unitCents;
+
+            resultCents[friend.id] =
+              (resultCents[friend.id] || 0) + unitCents;
+
             unitIndex += 1;
           }
         });
       }
     });
 
-    if (friends.length) distributeCents(Math.round(extras * 100), friends.map((friend) => friend.id));
+    return Object.fromEntries(
+      Object.entries(resultCents).map(([id, cents]) => [id, cents / 100])
+    );
+  }, [friends, receipt.items, assignments]);
 
-    return Object.fromEntries(Object.entries(resultCents).map(([id, cents]) => [id, cents / 100]));
-  }, [friends, receipt.items, assignments, extras]);
+  const extraChargesByPerson = useMemo(() => {
+    const resultCents: Record<string, number> = Object.fromEntries(
+      friends.map((friend) => [friend.id, 0])
+    );
+
+    if (!friends.length) return {};
+
+    const extraCents = Math.round(extras * 100);
+    const sign = extraCents < 0 ? -1 : 1;
+    const absoluteExtras = Math.abs(extraCents);
+
+    if (extraSplitMode === "equal") {
+      const base = Math.floor(absoluteExtras / friends.length);
+      const remainder = absoluteExtras % friends.length;
+
+      friends.forEach((friend, index) => {
+        resultCents[friend.id] =
+          (base + (index < remainder ? 1 : 0)) * sign;
+      });
+    } else {
+      const itemCentsByFriend = friends.map((friend) => ({
+        id: friend.id,
+        cents: Math.max(0, Math.round((baseTotals[friend.id] || 0) * 100)),
+      }));
+
+      const totalItemCents = itemCentsByFriend.reduce(
+        (sum, entry) => sum + entry.cents,
+        0
+      );
+
+      if (totalItemCents === 0) {
+        const base = Math.floor(absoluteExtras / friends.length);
+        const remainder = absoluteExtras % friends.length;
+
+        friends.forEach((friend, index) => {
+          resultCents[friend.id] =
+            (base + (index < remainder ? 1 : 0)) * sign;
+        });
+      } else {
+        const weighted = itemCentsByFriend.map((entry) => {
+          const raw = (absoluteExtras * entry.cents) / totalItemCents;
+          const floor = Math.floor(raw);
+
+          return {
+            ...entry,
+            floor,
+            fraction: raw - floor,
+          };
+        });
+
+        let remaining =
+          absoluteExtras -
+          weighted.reduce((sum, entry) => sum + entry.floor, 0);
+
+        weighted
+          .sort((a, b) => b.fraction - a.fraction)
+          .forEach((entry) => {
+            const extraPenny = remaining > 0 ? 1 : 0;
+            resultCents[entry.id] = (entry.floor + extraPenny) * sign;
+
+            if (extraPenny) remaining -= 1;
+          });
+      }
+    }
+
+    return Object.fromEntries(
+      Object.entries(resultCents).map(([id, cents]) => [id, cents / 100])
+    );
+  }, [friends, extras, baseTotals, extraSplitMode]);
+
+  const totals = useMemo(() => {
+    return Object.fromEntries(
+      friends.map((friend) => [
+        friend.id,
+        round2(
+          (baseTotals[friend.id] || 0) +
+            (extraChargesByPerson[friend.id] || 0)
+        ),
+      ])
+    );
+  }, [friends, baseTotals, extraChargesByPerson]);
 
   const assignedAmount = round2(Object.values(totals).reduce((sum, value) => sum + value, 0));
   const expectedTotal = round2(itemSubtotal + extras);
@@ -333,30 +443,34 @@ const [manualItemPrice, setManualItemPrice] = useState("");
     return used < item.quantity;
   });
 
-  const sendToSplitwise = async () => {
-    if (!friends.length || !payerId || unassigned.length) return;
-    setBusy(true);
-    setMessage("Sending exact shares to Splitwise…");
-    try {
-      const response = await fetch("/api/splitwise", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description: `${receipt.merchant || "Grocery"} groceries`,
-          payerName: friends.find((friend) => friend.id === payerId)?.name,
-          total: expectedTotal,
-          shares: friends.map((friend) => ({ name: friend.name, owed: totals[friend.id] || 0 })),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Splitwise failed.");
-      setMessage("Added to Splitwise ✓");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not add to Splitwise.");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const saveSplitImage = async () => {
+  if (!finalSplitRef.current) return;
+
+  try {
+    setMessage("Creating your Tabby split image…");
+
+    const dataUrl = await toPng(finalSplitRef.current, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: "#fffed8",
+    });
+
+    const link = document.createElement("a");
+
+    link.download = `tabby-${receipt.merchant || "grocery"}-split.png`;
+    link.href = dataUrl;
+    link.click();
+
+    setMessage("Split image saved ✓");
+  } catch (error) {
+    console.error(error);
+    setMessage("Could not create the split image.");
+  }
+};
+
+
+
+
 
   return (
     <main className="page-shell">
@@ -387,9 +501,7 @@ const [manualItemPrice, setManualItemPrice] = useState("");
             <input type="file" accept="image/*" multiple onChange={queueImages} disabled={busy} />
           </label>
           <button className="ghost-button" onClick={useDemo}>Try demo</button>
-          <button className="ghost-button" onClick={clearAll}>
-  Clear all
-</button>
+          <button className="ghost-button" onClick={clearAll}>Clear all</button>
         </div>
 
         {!!uploads.length && (
@@ -560,7 +672,7 @@ const [manualItemPrice, setManualItemPrice] = useState("");
                 <span className="friend-chip-close">×</span>
               </button>
             ))}
-            {!friends.length && <span className="hint">Add everyone who participated. Extra charges are split equally across this group.</span>}
+            {!friends.length && <span className="hint">Add everyone who participated. You can choose below whether extra charges are split equally or by order amount.</span>}
           </div>
           {!!friends.length && (
             <label className="payer-row">
@@ -675,7 +787,7 @@ const [manualItemPrice, setManualItemPrice] = useState("");
             </div>
             <div className="summary-layout">
               <div className="fees-card">
-                <h3>Shared equally</h3>
+                <h3>Extra charges</h3>
                 {[
                   ["Tax", "tax"],
                   ["Delivery", "deliveryFee"],
@@ -690,26 +802,100 @@ const [manualItemPrice, setManualItemPrice] = useState("");
                     </div>
                   </label>
                 ))}
-                <div className="fee-total"><span>Net shared extras</span><strong>{money(extras)}</strong></div>
-              </div>
-              <div className="final-card">
-                {friends.map((friend) => (
-                  <div className="total-person" key={friend.id}>
-                    <div>
-                      <Avatar name={friend.name} large />
-                      <span>
-                        <strong>{friend.name}</strong>
-                        {friend.id === payerId && <small>Paid the bill</small>}
-                      </span>
-                    </div>
-                    <strong>{money(totals[friend.id] || 0)}</strong>
+                <div className="fee-total">
+                  <span>Net shared extras</span>
+                  <strong>{money(extras)}</strong>
+                </div>
+
+                <div className="extra-split-choice">
+                  <span>How should extras be split?</span>
+
+                  <div className="extra-split-buttons">
+                    <button
+                      type="button"
+                      className={extraSplitMode === "equal" ? "active" : ""}
+                      onClick={() => setExtraSplitMode("equal")}
+                    >
+                      Equally
+                    </button>
+
+                    <button
+                      type="button"
+                      className={extraSplitMode === "proportional" ? "active" : ""}
+                      onClick={() => setExtraSplitMode("proportional")}
+                    >
+                      By order amount
+                    </button>
                   </div>
-                ))}
-                <div className="grand-total"><span>Assigned total</span><strong>{money(assignedAmount)}</strong></div>
-                <div className="match-note"><span>Receipt math</span><strong>{money(expectedTotal)}</strong></div>
-                {unassigned.length ? <p className="warning">Assign all items before sending to Splitwise. {unassigned.length} item{unassigned.length > 1 ? "s are" : " is"} incomplete.</p> : null}
-                {/* <button className="splitwise-button" disabled={busy || !!unassigned.length} onClick={sendToSplitwise}>S ↗ Add exact split to Splitwise</button> */}
+                </div>
+
+                {!!friends.length && (
+                  <div className="extra-person-breakdown">
+                    <span className="extra-person-title">
+                      Extra charges per person
+                    </span>
+
+                    {friends.map((friend) => (
+                      <div className="extra-person-row" key={friend.id}>
+                        <div>
+                          <Avatar name={friend.name} />
+                          <span>{friend.name}</span>
+                        </div>
+
+                        <strong>
+                          {money(extraChargesByPerson[friend.id] || 0)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+             <div className="final-card">
+  <div className="split-export" ref={finalSplitRef}>
+
+    <div className="split-export-header">
+      <span>Tabby</span>
+      <small>{receipt.merchant || "Grocery Run"}</small>
+    </div>
+
+    {friends.map((friend) => (
+      <div className="total-person" key={friend.id}>
+        <div>
+          <Avatar name={friend.name} large />
+
+          <span>
+            <strong>{friend.name}</strong>
+
+            {friend.id === payerId && (
+              <small>Paid the bill</small>
+            )}
+          </span>
+        </div>
+
+        <strong>{money(totals[friend.id] || 0)}</strong>
+      </div>
+    ))}
+
+    <div className="grand-total">
+      <span>Assigned total</span>
+      <strong>{money(assignedAmount)}</strong>
+    </div>
+
+    <div className="match-note">
+      <span>Receipt total</span>
+      <strong>{money(expectedTotal)}</strong>
+    </div>
+
+  </div>
+
+  <button
+    className="save-image-button"
+    onClick={saveSplitImage}
+    disabled={!!unassigned.length}
+  >
+    Save split as image
+  </button>
+</div>
             </div>
           </>
         )}
