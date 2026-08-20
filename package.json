@@ -1,0 +1,25 @@
+{
+  "name": "cart-split",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "dev:lan": "next dev --hostname 0.0.0.0"
+  },
+  "dependencies": {
+    "@google/genai": "latest",
+    "@vercel/firewall": "^1.2.5",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

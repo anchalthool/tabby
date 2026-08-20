@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="660" viewBox="0 0 1440 660" preserveAspectRatio="none">
+  <!-- cream field (Guava #ECEDDF) -->
+  <rect width="1440" height="660" fill="#ECEDDF"/>
+  <!-- soft sun (Guava pale yellow) -->
+  <circle cx="1160" cy="120" r="48" fill="#F5EE9A" opacity="0.8"/>
+  <circle cx="1160" cy="120" r="30" fill="#DFCE59" opacity="0.6"/>
+  <!-- clouds -->
+  <path d="M250 130c-30 0-46 20-44 38 3 22 30 22 52 20 30 3 74 6 96-10 18-14 8-40-18-42-8-20-58-24-86-6Z" fill="#F6F7EC" opacity="0.9"/>
+  <path d="M980 74c-24 0-36 16-34 30 2 16 22 18 40 16 24 2 58 4 74-8 14-11 6-30-14-32-8-16-44-18-66-6Z" fill="#F6F7EC" opacity="0.8"/>
+  <!-- hill ridge (behind), Guava pale green -->
+  <path d="M0 392C170 344 340 372 520 392 720 414 900 378 1090 388 1230 395 1350 414 1440 402V660H0Z" fill="#CBEFAA"/>
+  <!-- hill ridge (mid), Guava light green -->
+  <path d="M0 452C200 408 360 440 560 454 780 470 960 434 1160 444 1290 450 1380 464 1440 456V660H0Z" fill="#BEDE8A"/>
+  <!-- hill ridge (front), Guava mid green -->
+  <path d="M0 520C220 482 420 512 640 522 880 533 1040 506 1260 514 1350 517 1410 524 1440 520V660H0Z" fill="#8BC148"/>
+  <!-- cream meadow floor covers lower green so page stays light/clean -->
+  <path d="M0 566C240 528 460 556 700 562 940 568 1120 544 1320 552 1380 555 1420 560 1440 558V660H0Z" fill="#ECEDDF"/>
+</svg>
