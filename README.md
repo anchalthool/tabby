@@ -1,10 +1,10 @@
 # CartSplit
 
-Mobile-first grocery bill splitting app.
+Mobile-first bill/check splitting app.
 
 ## Features
 
-- Upload or photograph a grocery receipt / order screenshot
+- Upload or photograph a receipt / order screenshot
 - Gemini multimodal receipt extraction
 - Editable item names, quantities, and prices
 - Per-person quantity assignment with + / - controls
